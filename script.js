@@ -164,5 +164,18 @@ function searchInventory() {
     const rows = document.querySelectorAll('#inventory-body tr');
     rows.forEach(r => r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none");
 }
+// Add this to your renderApp function to save data automatically
+function saveData() {
+    localStorage.setItem('pantryData', JSON.stringify(inventory));
+    localStorage.setItem('pantryLogs', JSON.stringify(logs));
+}
 
+// Add this to the top of your script to load data when the page opens
+window.onload = () => {
+    const savedData = localStorage.getItem('pantryData');
+    const savedLogs = localStorage.getItem('pantryLogs');
+    if (savedData) inventory = JSON.parse(savedData);
+    if (savedLogs) logs = JSON.parse(savedLogs);
+    renderApp();
+};
 window.onload = renderApp;
