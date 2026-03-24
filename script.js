@@ -1,7 +1,7 @@
 // --- INITIAL STATE ---
 let inventory = {
-    "Milk": { quantity: 12, category: "Dairy", lastBy: "System" },
-    "Bread": { quantity: 5, category: "Produce", lastBy: "System" }
+    "Milk": { quantity: 12, category: "Dairy", lastBy: "Aseye" },
+    "Bread": { quantity: 5, category: "Produce", lastBy: "Aseye" }
 };
 let logs = [];
 let isSystemActive = true;
