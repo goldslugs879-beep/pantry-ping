@@ -1,64 +1,95 @@
-/* --- THEME & VARIABLES --- */
+/* --- MODERN RESET & VARIABLES --- */
 :root[data-theme="dark"] {
-    --bg-color: #020617;
-    --card-glass: rgba(15, 23, 42, 0.7);
-    --text-main: #f8fafc;
+    --bg: #050b1a;
+    --glass: rgba(15, 23, 42, 0.6);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --text: #f8fafc;
     --text-dim: #94a3b8;
     --accent: #38bdf8;
+    --accent-glow: rgba(56, 189, 248, 0.3);
     --success: #10b981;
-    --danger: #ef4444;
+    --danger: #f43f5e;
     --warning: #f59e0b;
-    --border: rgba(255, 255, 255, 0.1);
 }
 
 :root[data-theme="light"] {
-    --bg-color: #f1f5f9;
-    --card-glass: rgba(255, 255, 255, 0.8);
-    --text-main: #0f172a;
-    --text-dim: #475569;
+    --bg: #f1f5f9;
+    --glass: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --text: #0f172a;
+    --text-dim: #64748b;
     --accent: #0284c7;
-    --success: #16a34a;
-    --danger: #dc2626;
+    --accent-glow: rgba(2, 132, 199, 0.2);
+    --success: #059669;
+    --danger: #e11d48;
     --warning: #d97706;
-    --border: rgba(0, 0, 0, 0.1);
 }
 
-/* --- GLOBAL LAYOUT --- */
-* { box-sizing: border-box; transition: all 0.3s ease; }
+* { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
 
 body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    min-height: 100vh;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    line-height: 1.6;
 }
 
+/* --- ANIMATED MESH BACKGROUND --- */
 .mesh-bg {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: radial-gradient(at 0% 0%, hsla(217,100%,12%,0.2) 0, transparent 50%), 
-                radial-gradient(at 100% 100%, hsla(222,47%,11%,0.2) 0, transparent 50%);
+    background: 
+        radial-gradient(at 0% 0%, hsla(213, 94%, 19%, 0.15) 0, transparent 50%),
+        radial-gradient(at 100% 100%, hsla(199, 89%, 48%, 0.1) 0, transparent 50%);
     z-index: -1;
+    filter: blur(80px);
 }
 
-.container { max-width: 1000px; margin: 0 auto; padding: 1.5rem; }
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
 
-/* --- GLASS CARDS --- */
+/* --- GLASS CARD DESIGN --- */
 .card {
-    background: var(--card-glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 20px;
+    background: var(--glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
     padding: 1.5rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* --- LOGO & HEADER --- */
-.glass-header { display: flex; justify-content: space-between; align-items: center; }
-.logo { font-weight: 800; font-size: 1.5rem; letter-spacing: -1px; }
-.logo span { color: var(--accent); }
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    text-transform: uppercase;
+}
+
+.logo span {
+    color: var(--accent);
+    text-shadow: 0 0 15px var(--accent-glow);
+}
+
+.glass-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 
 /* --- STATUS PILL (Active/Inactive Light) --- */
 .status-pill {
@@ -66,7 +97,7 @@ body {
     padding: 6px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 800;
 }
 .status-pill::before {
-    content: ""; width: 8px; height: 8px; border-radius: 50%;
+    content: ""; width: 8px; height: 8px; border-radius: 50%;align-self: auto;
 }
 
 .status-pill.active { background: rgba(16, 185, 129, 0.1); color: var(--success); }
@@ -83,92 +114,150 @@ body {
 }
 .active-tab { background: var(--accent); color: white; border-color: var(--accent); font-weight: 700; }
 
-input, select { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; background: rgba(0,0,0,0.2); color: white; border: 1px solid var(--border); }
-button { cursor: pointer; border: none; font-weight: 700; border-radius: 10px; }
-.btn-primary { background: var(--accent); color: white; width: 100%; padding: 12px; }
-.btn-success { background: var(--success); color: white; width: 100%; padding: 10px; margin-top: 5px; }
-.btn-remove { background: var(--danger); color: white; padding: 12px; }
-.btn-remove-small { background: var(--danger); color: white; font-size: 0.7rem; padding: 5px 10px; }
 
-/* --- CUSTOM SCROLLBAR FOR THE ENTIRE APP --- */
-::-webkit-scrollbar {
-    width: 8px; /* Width of the vertical scrollbar */
-    height: 8px; /* Height of the horizontal scrollbar */
+/* --- INPUTS & SELECTS --- */
+input, select {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+    color: var(--text);
+    font-size: 0.95rem;
+    outline: none;
 }
 
-::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05); /* Nearly invisible track */
-    border-radius: 10px;
+input:focus, select:focus {
+    border-color: var(--accent);
+    background: rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
-::-webkit-scrollbar-thumb {
-    background: rgba(56, 189, 248, 0.3); /* Subtle accent color (Glassy) */
-    border-radius: 10px;
-    border: 2px solid transparent; /* Creates padding around the thumb */
-    background-clip: content-box;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--accent); /* Brightens when you hover */
-}
-
-/* --- SPECIFIC TABLE SCROLL STYLING --- */
-.table-scroll {
-    max-height: 350px;
-    overflow-y: auto;
-    padding-right: 5px; /* Space for the scrollbar */
-    scrollbar-width: thin; /* Firefox support */
-    scrollbar-color: var(--accent) transparent; /* Firefox support */
-}
-
-/* Optional: Fade effect at the bottom of the scroll area */
-.table-scroll {
-    mask-image: linear-gradient(to bottom, 
-        black 0%, 
-        black 90%, 
-        transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(to bottom, 
-        black 0%, 
-        black 90%, 
-        transparent 100%
-    );
-}
-
-/* Smooth Scrolling for the table */
-.table-scroll {
-    scroll-behavior: smooth;
-}
-* --- INVENTORY TABLE --- */
-.table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-#search-bar { width: 250px; margin-bottom: 0; }
-.table-scroll { max-height: 300px; overflow-y: auto; }
-
-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-th { color: var(--text-dim); font-weight: 400; padding: 10px; border-bottom: 1px solid var(--border); }
-td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-
-.mgr-btn-group {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.btn-danger-outline {
-    background: transparent;
-    border: 1px solid var(--danger);
-    color: var(--danger);
-    padding: 10px;
-    font-size: 0.8rem;
+/* --- BUTTONS --- */
+button {
+    font-weight: 800;
+    border-radius: 14px;
     cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-primary { background: var(--accent); color: white; width: 100%; padding: 14px; }
+.btn-success { background: var(--success); color: white; width: 100%; padding: 14px; }
+.btn-remove { background: var(--danger); color: white; padding: 14px; width: 100%; }
+
+button:active { transform: scale(0.96); }
+
+
+/* --- TABLES --- */
+.table-scroll {
+    max-height: 380px;
+    overflow-y: auto;
+    border-radius: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+th {
+    text-align: left;
+    padding: 12px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+td {
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+td:first-child { border-radius: 12px 0 0 12px; font-weight: 700; }
+td:last-child { border-radius: 0 12px 12px 0; }
+
+
+/* Styling for Table Badges */
+.badge {
+    background: rgba(56, 189, 248, 0.1);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Row Hover Effect */
+tbody tr {
+    transition: background 0.2s;
+}
+
+tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Ensure code-style IDs look technical */
+code {
+    background: #1e293b;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #38bdf8;
+    font-family: monospace;
+}
+
+
+/* --- SMOOTH TRANSITION ANIMATION --- */
+.view-content, .card {
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtle pulse for the Login Button to guide the next user */
+.btn-primary {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+/* --- MINI BUTTONS (EDIT/DEL) --- */
+.btn-edit-small {
+    background: var(--accent-glow);
+    color: var(--accent);
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+}
+
+.btn-del-small {
+    background: rgba(244, 63, 94, 0.1);
+    color: var(--danger);
+    padding: 6px 12px;
+    font-size: 0.7rem;
+}
+
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
     border-radius: 10px;
 }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-.btn-danger-outline:hover {
-    background: var(--danger);
-    color: white;
-}
-
+/* --- MODAL --- */
 .log-stream { background: rgba(0,0,0,0.3); height: 150px; overflow-y: auto; padding: 1rem; border-radius: 10px; font-family: monospace; font-size: 0.8rem; }
 .modal-overlay {
     display: none; position: fixed; top:0; left:0; width:100%; height:100%;
