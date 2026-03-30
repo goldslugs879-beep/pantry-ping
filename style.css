@@ -182,36 +182,6 @@ td {
 td:first-child { border-radius: 12px 0 0 12px; font-weight: 700; }
 td:last-child { border-radius: 0 12px 12px 0; }
 
-
-/* Styling for Table Badges */
-.badge {
-    background: rgba(56, 189, 248, 0.1);
-    color: var(--accent);
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-
-/* Row Hover Effect */
-tbody tr {
-    transition: background 0.2s;
-}
-
-tbody tr:hover {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-/* Ensure code-style IDs look technical */
-code {
-    background: #1e293b;
-    padding: 2px 6px;
-    border-radius: 4px;
-    color: #38bdf8;
-    font-family: monospace;
-}
-
-
 /* --- SMOOTH TRANSITION ANIMATION --- */
 .view-content, .card {
     animation: fadeIn 0.4s ease-out;
@@ -221,18 +191,31 @@ code {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+.btn-edit-small {
+    background: #0ea5e9;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    margin-right: 4px;
+}
+
+.btn-del-small {
+    background: #ef4444;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+}
+
+.btn-edit-small:hover { background: #0284c7; }
+.btn-del-small:hover { background: #dc2626; }
 
 /* Subtle pulse for the Login Button to guide the next user */
 .btn-primary {
     position: relative;
     overflow: hidden;
 }
-
-.btn-primary:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 0 20px var(--accent-glow);
-}
-/* --- MINI BUTTONS (EDIT/DEL) --- */
 .btn-edit-small {
     background: var(--accent-glow);
     color: var(--accent);
@@ -240,14 +223,32 @@ code {
     font-size: 0.7rem;
     text-transform: uppercase;
 }
-
-.btn-del-small {
-    background: rgba(244, 63, 94, 0.1);
-    color: var(--danger);
-    padding: 6px 12px;
-    font-size: 0.7rem;
+.btn-primary:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 0 20px var(--accent-glow);
 }
-
+.btn-outline{
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    padding: 12px 16px;
+}
+.btn-remove{
+    background: var(--danger);
+    color: white;
+    padding: 12px 16px;
+}
+.btn-warning{
+    background: var(--warning);
+    color: white;
+    padding: 12px 16px;
+}
+.btn-danger-outline{
+    background: transparent;
+    color: var(--danger);
+    border: 2px solid var(--danger);
+    padding: 12px 16px;
+}
 /* --- SCROLLBAR --- */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

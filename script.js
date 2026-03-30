@@ -1,154 +1,147 @@
-// --- 1. CONFIGURATION ---
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-app.firebaseapp.com",
-    databaseURL: "https://your-app-default-rtdb.firebaseio.com",
-    projectId: "your-app",
-    storageBucket: "your-app.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:12345:web:6789"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// State Variables
-let inventory = {};
-let staffAccounts = {};
+// --- 1. INITIAL STATE & DATA PERSISTENCE ---
+let inventory = JSON.parse(localStorage.getItem('pantryData')) || {};
+let logs = JSON.parse(localStorage.getItem('pantryLogs')) || [];
+let staffAccounts = JSON.parse(localStorage.getItem('staffAccounts')) || {};
+let isSystemActive = true;
 let activeStaffName = "";
-const MASTER_PIN = "1234";
+const MASTER_PIN = "1234"; 
 
-// --- 2. THE REACTIVE LISTENER ---
-// This is the heart of the "Concurrent" update
-db.ref('/').on('value', (snapshot) => {
-    const data = snapshot.val() || {};
-    
-    // Sync local memory with Cloud data
-    inventory = data.inventory || {};
-    staffAccounts = data.staffAccounts || {};
-
-    // Trigger UI Updates immediately and concurrently
-    renderInventoryTable();
-    renderStaffDirectory();
-    updateGrandTotal();
-});
-
-// --- 3. RENDER FUNCTIONS ---
-
-function renderInventoryTable() {
-    const tbody = document.getElementById('inventory-body');
-    if (!tbody) return;
-
-    tbody.innerHTML = ""; // Clear existing rows to prevent duplicates
-
-    // Use Object.keys to handle the data loop
-    Object.keys(inventory).forEach(itemName => {
-        const item = inventory[itemName];
-        const isMgr = document.getElementById('manager-section').style.display === 'block';
-
-        const row = `
-            <tr>
-                <td><strong>${itemName}</strong></td>
-                <td><span class="badge">${item.category}</span></td>
-                <td>${item.quantity}</td>
-                <td>${item.lastBy || '---'}</td>
-                <td class="mgr-action-cell" style="display: ${isMgr ? 'table-cell' : 'none'}">
-                    <button onclick="editItem('${itemName}')" class="btn-edit-small">Edit</button>
-                    <button onclick="deleteItem('${itemName}')" class="btn-del-small">X</button>
-                </td>
-            </tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-    });
+// --- 2. AUTHENTICATION & SECURITY ---
+function openSecurity() { document.getElementById('security-modal').style.display = 'flex'; }
+function closeModal() { 
+    document.getElementById('security-modal').style.display = 'none'; 
+    document.getElementById('pin-input').value = ''; 
 }
 
-function renderStaffDirectory() {
-    const tbody = document.getElementById('staff-directory-body');
-    if (!tbody) return;
-
-    tbody.innerHTML = ""; 
-
-    Object.keys(staffAccounts).forEach(id => {
-        const staff = staffAccounts[id];
-        const row = `
-            <tr>
-                <td><code>${id}</code></td>
-                <td>${staff.name}</td>
-                <td>${staff.gender}</td>
-                <td>
-                    <button onclick="deleteStaff('${id}')" class="btn-del-small">Remove</button>
-                </td>
-            </tr>`;
-        tbody.insertAdjacentHTML('beforeend', row);
-    });
+function validatePIN() {
+    if (document.getElementById('pin-input').value === MASTER_PIN) {
+        switchView('manager');
+        closeModal();
+    } else { 
+        alert("Incorrect Security Code!"); 
+    }
 }
 
-function updateGrandTotal() {
+// --- 3. EDIT & DELETE LOGIC ---
+function editItem(itemName) {
+    const item = inventory[itemName];
+    const newQty = prompt(`Edit Quantity for ${itemName}:`, item.quantity);
+    const newCat = prompt(`Edit Category for ${itemName}:`, item.category);
+
+    if (newQty !== null && newCat !== null) {
+        inventory[itemName].quantity = parseInt(newQty);
+        inventory[itemName].category = newCat;
+        inventory[itemName].lastBy = "Manager (Edited)";
+        saveAndRefresh();
+        alert(`✅ Updated ${itemName} successfully!`);
+    }
+}
+
+function deleteItem(itemName) {
+    if (confirm(`⚠️ Are you sure you want to delete ${itemName}?`)) {
+        delete inventory[itemName];
+        saveAndRefresh();
+    }
+}
+
+function deleteStaff(id) {
+    if (confirm("Delete this staff account?")) {
+        delete staffAccounts[id];
+        localStorage.setItem('staffAccounts', JSON.stringify(staffAccounts));
+        renderStaffDirectory();
+    }
+}
+
+// --- 4. DATA SYNC & RENDERING ---
+function saveAndRefresh() {
+    localStorage.setItem('pantryData', JSON.stringify(inventory));
+    localStorage.setItem('pantryLogs', JSON.stringify(logs));
+    renderApp();
+}
+
+function renderApp() {
+    const table = document.getElementById('inventory-body');
+    const staffSelect = document.getElementById('staff-item-list');
+    const logBox = document.getElementById('audit-log');
     let total = 0;
-    Object.values(inventory).forEach(item => {
-        total += parseInt(item.quantity || 0);
-    });
-    const totalEl = document.getElementById('grand-total');
-    if (totalEl) totalEl.innerText = total;
+
+    table.innerHTML = "";
+    // Check if staffSelect exists before trying to update it
+    if (staffSelect) staffSelect.innerHTML = '<option value="" disabled selected>Select Item...</option>';
+    
+    for (let key in inventory) {
+        const item = inventory[key];
+        total += item.quantity;
+        
+        // This row now correctly includes your Edit and Delete buttons
+        table.innerHTML += `
+            <tr>
+                <td><strong>${key}</strong></td>
+                <td>${item.category}</td>
+                <td>${item.quantity}</td>
+                <td>${item.lastBy}</td>
+                <td>
+                    <button onclick="editItem('${key}')" class="btn-edit-small">Edit</button>
+                    <button onclick="deleteItem('${key}')" class="btn-del-small">Delete</button>
+                </td>
+            </tr>`;
+        
+        if (staffSelect) staffSelect.innerHTML += `<option value="${key}">${key}</option>`;
+    }
+
+    if (logBox) logBox.innerHTML = logs.map(l => `<div class="log-entry">> ${l}</div>`).join('');
+    document.getElementById('grand-total').innerText = total;
 }
 
-// --- 4. ACTION FUNCTIONS ---
-
+// --- 5. TRANSACTION ENGINE ---
 function processTransaction(type) {
+    if (!isSystemActive && type === 'remove') return alert("System is currently INACTIVE.");
+
     const itemInput = type === 'add' ? document.getElementById('mgr-item') : document.getElementById('staff-item-list');
     const qtyInput = type === 'add' ? document.getElementById('mgr-qty') : document.getElementById('staff-qty');
     
-    const itemName = itemInput.value.trim();
+    const item = itemInput.value;
     const qty = parseInt(qtyInput.value);
     const actor = type === 'add' ? "Manager" : activeStaffName;
 
-    if (!itemName || isNaN(qty) || qty <= 0) return alert("Enter valid details.");
+    if (!item || isNaN(qty) || qty <= 0) return alert("Please enter valid details.");
 
     if (type === 'add') {
         const cat = document.getElementById('mgr-cat').value || "General";
-        db.ref(`inventory/${itemName}`).set({
-            quantity: qty,
-            category: cat,
-            lastBy: "Manager"
-        });
+        if (!inventory[item]) inventory[item] = { quantity: 0, category: cat };
+        inventory[item].quantity += qty;
+        inventory[item].lastBy = "Manager";
         // Clear inputs
         itemInput.value = ""; qtyInput.value = ""; document.getElementById('mgr-cat').value = "";
     } else {
-        if (!inventory[itemName] || inventory[itemName].quantity < qty) return alert("Low Stock!");
-        
-        const newQty = inventory[itemName].quantity - qty;
-        db.ref(`inventory/${itemName}/quantity`).set(newQty);
-        db.ref(`inventory/${itemName}/lastBy`).set(actor);
-        
-        alert("Deduction successful. Logging out...");
+        if (!inventory[item] || inventory[item].quantity < qty) return alert("❌ Stock unavailable!");
+        inventory[item].quantity -= qty;
+        inventory[item].lastBy = actor;
+        alert(`✅ Successfully removed ${qty} ${item}.`);
         logoutStaff();
     }
+
+    logs.unshift(`[${new Date().toLocaleTimeString()}] ${actor} ${type.toUpperCase()}D ${qty} ${item}`);
+    saveAndRefresh();
 }
 
-function createStaffAccount() {
-    const id = document.getElementById('new-staff-id').value.trim();
-    const name = document.getElementById('new-staff-name').value.trim();
-    const gen = document.getElementById('new-staff-gender').value;
-
-    if (id && name && gen) {
-        db.ref(`staffAccounts/${id}`).set({ name, gender: gen });
-        document.getElementById('new-staff-id').value = "";
-        document.getElementById('new-staff-name').value = "";
-    } else {
-        alert("Please fill all staff fields.");
-    }
+// --- 6. VIEW & STAFF HELPERS ---
+function switchView(view) {
+    document.getElementById('staff-section').style.display = view === 'staff' ? 'block' : 'none';
+    document.getElementById('manager-section').style.display = view === 'manager' ? 'block' : 'none';
+    if (view === 'manager') renderStaffDirectory();
+    document.getElementById('tab-staff').classList.toggle('active-tab', view === 'staff');
+    document.getElementById('tab-manager').classList.toggle('active-tab', view === 'manager');
 }
 
-// --- 5. UI UTILITIES ---
-
-function switchView(v) {
-    document.getElementById('staff-section').style.display = v === 'staff' ? 'block' : 'none';
-    document.getElementById('manager-section').style.display = v === 'manager' ? 'block' : 'none';
-
-    document.getElementById('tab-staff').classList.toggle('active-tab', v === 'staff');
-    document.getElementById('tab-manager').classList.toggle('active-tab', v === 'manager');
-    
-    // Refresh table to show/hide Admin column
-    renderInventoryTable();
+function staffLogin() {
+    const id = document.getElementById('staff-id-entry').value.trim();
+    if (staffAccounts[id]) {
+        activeStaffName = staffAccounts[id].name;
+        document.getElementById('staff-login-area').style.display = 'none';
+        document.getElementById('staff-action-area').style.display = 'block';
+        document.getElementById('greeting').innerText = `Welcome, ${activeStaffName}`;
+    } else { alert("Access Denied: ID not found."); }
 }
 
 function logoutStaff() {
@@ -158,103 +151,65 @@ function logoutStaff() {
     document.getElementById('staff-action-area').style.display = 'none';
 }
 
-function deleteStaff(id) {
-    if (confirm(`Remove ${staffAccounts[id].name}?`)) {
-        db.ref(`staffAccounts/${id}`).remove();
-    }
-}
-
-function deleteItem(name) {
-    if (confirm(`Delete ${name} from inventory?`)) {
-        db.ref(`inventory/${name}`).remove();
-    }
-}
-
-
-// --- 8. RENDERING ---
-function renderApp() {
-    const table = document.getElementById('inventory-body');
-    const staffSelect = document.getElementById('staff-item-list');
-    const isMgr = document.getElementById('manager-section').style.display === 'block';
-    
-    document.querySelectorAll('.mgr-action-head').forEach(el => el.style.display = isMgr ? 'table-cell' : 'none');
-
-    let total = 0;
-    table.innerHTML = ""; 
-    staffSelect.innerHTML = '<option value="" disabled selected>Select Item...</option>';
-    
-    for (let key in inventory) {
-        total += inventory[key].quantity;
-        let row = `<tr>
-            <td>${key}</td>
-            <td>${inventory[key].category}</td>
-            <td>${inventory[key].quantity}</td>
-            <td>${inventory[key].lastBy || '-'}</td>`;
-        
-        if (isMgr) {
-            row += `<td>
-                <button onclick="editItem('${key}')" class="btn-edit-small">Edit</button>
-                <button onclick="deleteItem('${key}')" class="btn-del-small">X</button>
-            </td>`;
-        }
-        row += `</tr>`;
-        table.innerHTML += row;
-        staffSelect.innerHTML += `<option value="${key}">${key}</option>`;
-    }
-    document.getElementById('audit-log').innerHTML = logs.map(l => `<div class="log-entry">${l}</div>`).join('');
-    document.getElementById('grand-total').innerText = total;
-}
-
 function renderStaffDirectory() {
-    const b = document.getElementById('staff-directory-body');
-    b.innerHTML = "";
+    const body = document.getElementById('staff-directory-body');
+    if (!body) return;
+    body.innerHTML = "";
     for (let id in staffAccounts) {
-        b.innerHTML += `<tr>
-            <td>${id}</td>
-            <td>${staffAccounts[id].name}</td>
-            <td>${staffAccounts[id].gender}</td>
-            <td><button onclick="deleteStaff('${id}')" class="btn-del-small">X</button></td>
-        </tr>`;
+        body.innerHTML += `
+            <tr>
+                <td><code>${id}</code></td>
+                <td>${staffAccounts[id].name}</td>
+                <td>${staffAccounts[id].gender}</td>
+                <td>${staffAccounts[id].contact || 'N/A'}</td>
+                <td><button onclick="deleteStaff('${id}')" class="btn-del-small">Delete</button></td>
+            </tr>`;
     }
 }
 
-// Security Helpers
-function openSecurity() { document.getElementById('security-modal').style.display='flex'; }
-function closeModal() { document.getElementById('security-modal').style.display='none'; }
-function validatePIN() {
-    if(document.getElementById('pin-input').value === MASTER_PIN) {
-        switchView('manager');
-        closeModal();
-        document.getElementById('pin-input').value = "";
-    } else {
-        alert("Incorrect Security PIN.");
+function createStaffAccount() {
+    const id = document.getElementById('new-staff-id').value.trim();
+    const name = document.getElementById('new-staff-name').value.trim();
+    const contact = document.getElementById('new-staff-contact').value.trim();
+    const gender = document.getElementById('new-staff-gender').value;
+
+    if (id && name && contact && gender) {
+        staffAccounts[id] = { name, contact, gender };
+        localStorage.setItem('staffAccounts', JSON.stringify(staffAccounts));
+        renderStaffDirectory();
+        document.getElementById('new-staff-id').value = '';
+        document.getElementById('new-staff-name').value = '';
+        document.getElementById('new-staff-contact').value = '';
+        document.getElementById('new-staff-gender').value = '';
+        alert("Staff account created successfully!");
+    }
+}
+// --- CLEAR ONLY THE HISTORY LOGS ---
+function clearAuditLogs() {
+    if (confirm("Are you sure you want to clear the entire history log?")) {
+        logs = []; // Empty the array
+        localStorage.setItem('pantryLogs', JSON.stringify(logs)); // Save empty list
+        renderApp(); // Refresh the UI
+        alert("History logs have been cleared.");
     }
 }
 
-function updateStatusUI() {
-    const b = document.getElementById('system-status');
-    b.innerText = isSystemActive ? "SYSTEM ACTIVE" : "SYSTEM INACTIVE";
-    b.className = `status-pill ${isSystemActive ? 'active' : 'inactive'}`;
-}
-
-function searchInventory() {
-    let q = document.getElementById('search-bar').value.toLowerCase();
-    document.querySelectorAll('#inventory-body tr').forEach(r => {
-        r.style.display = r.innerText.toLowerCase().includes(q) ? "" : "none";
-    });
-}
-
-function toggleTheme() {
-    const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', t);
-}
-
-function editItem(key) {
-    const itm = inventory[key];
-    document.getElementById('mgr-item').value = key;
-    document.getElementById('mgr-cat').value = itm.category;
-    document.getElementById('mgr-qty').value = itm.quantity;
-    document.querySelector('.mgr-grid').scrollIntoView({ behavior: 'smooth' });
+// --- FULL SYSTEM WIPE (Use with caution!) ---
+function masterReset() {
+    const confirmation = confirm("WARNING: This will delete ALL inventory items and ALL history. Proceed?");
+    if (confirmation) {
+        const pin = prompt("Enter Master PIN to confirm reset:");
+        if (pin === MASTER_PIN) {
+            localStorage.removeItem('pantryData');
+            localStorage.removeItem('pantryLogs');
+            inventory = {};
+            logs = [];
+            renderApp();
+            alert("System has been fully reset.");
+        } else {
+            alert("Incorrect PIN. Reset cancelled.");
+        }
+    }
 }
 
 window.onload = renderApp;

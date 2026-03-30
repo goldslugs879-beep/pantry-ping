@@ -29,7 +29,7 @@
                 <div id="staff-login-area" class="card glass">
                     <h3>Staff Identity</h3>
                     <p class="hint">Enter your registered ID to begin</p>
-                    <input type="text" id="staff-id-entry" placeholder="e.g. STF-001">
+                    <input type="text" id="staff-id-entry" placeholder="Enter your ID">
                     <button onclick="staffLogin()" class="btn-primary">Verify ID</button>
                 </div>
 
@@ -49,6 +49,7 @@
                         <h3>👤 Register Staff</h3>
                         <input type="text" id="new-staff-id" placeholder="New ID">
                         <input type="text" id="new-staff-name" placeholder="Full Name">
+                        <input type="tel" id="new-staff-contact" placeholder="Contact Number (e.g. 024...)">
                         <select id="new-staff-gender">
                             <option value="" disabled selected>Gender</option>
                             <option value="Male">Male</option>
@@ -75,10 +76,11 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Item Name</th>
+                                <th>Item</th>
                                 <th>Category</th>
                                 <th>Qty</th>
                                 <th>Last By</th>
+                                <th class="mgr-only">Actions</th> </tr>
                                 <th class="mgr-action-head" style="display:none;">Admin</th>
                             </tr>
                         </thead>
@@ -94,7 +96,7 @@
                     <div class="table-scroll">
                         <table>
                             <thead>
-                                <tr><th>ID</th><th>Name</th><th>Gen</th><th>Action</th></tr>
+                                <tr><th>ID</th><th>Name</th><th>Gen</th><th>Contact</th><th>Action</th></tr>
                             </thead>
                             <tbody id="staff-directory-body"></tbody>
                         </table>
@@ -105,9 +107,14 @@
                     <h3>🛡️ Audit Trail</h3>
                     <div id="audit-log" class="log-stream"></div>
                     <div class="mgr-btn-group">
-                        <button onclick="exportData()" class="btn-outline">📥 Export CSV</button>
-                        <button id="state-toggle-btn" onclick="toggleSystemState()" class="btn-warning">Toggle System Access</button>
+                    <button onclick="exportData()" class="btn-outline">Export-CSV</button>
+                    <button onclick="clearAuditLogs()" class="btn-remove">Clear Logs</button>    
                     </div>
+                              
+        <div class="mgr-controls">
+        <button onclick="masterReset()" class="btn-danger-outline">Full System Reset</button><br>
+        <button id="state-toggle-btn" onclick="toggleSystemState()" class="btn-warning">Toggle System</button>
+    </div>
                 </div>
             </section>
         </main>
@@ -125,9 +132,6 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>
