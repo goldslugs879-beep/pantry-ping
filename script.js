@@ -27,7 +27,7 @@ function editItem(itemName) {
     const item = inventory[itemName];
     const newQty = prompt(`Edit Quantity for ${itemName}:`, item.quantity);
     const newCat = prompt(`Edit Category for ${itemName}:`, item.category);
-
+    
     if (newQty !== null && newCat !== null) {
         inventory[itemName].quantity = newQty;
         inventory[itemName].category = newCat;
@@ -101,27 +101,27 @@ function processTransaction(type) {
     const qtyInput = type === 'add' ? document.getElementById('mgr-qty') : document.getElementById('staff-qty');
     
     const item = itemInput.value;
-    const qty = qtyInput.value;
+    qtyValue = qtyInput.value.trim();
     const actor = type === 'add' ? "Manager" : activeStaffName;
 
-    if (!item || isNaN(qty) || qty <= 0) return alert("Please enter valid details.");
+    if (!item || qtyValue) return alert("Please enter valid details.");
 
     if (type === 'add') {
         const cat = document.getElementById('mgr-cat').value || "General";
-        if (!inventory[item]) inventory[item] = { quantity: 0, category: cat };
-        inventory[item].quantity += qty;
-        inventory[item].lastBy = "Manager";
-        // Clear inputs
-        itemInput.value = ""; qtyInput.value = ""; document.getElementById('mgr-cat').value = "";
+       inventory[itemName] = { 
+            quantity: qtyValue, 
+            category: cat, 
+            lastBy: "Manager"
+        
     } else {
         if (!inventory[item] || inventory[item].quantity < qty) return alert("❌ Stock unavailable!");
-        inventory[item].quantity -= qty;
-        inventory[item].lastBy = actor;
-        alert(`✅ Successfully removed ${qty} ${item}.`);
-        logoutStaff();
+        inventory[itemName].quantity = `Reduced by ${qtyValue} (Now: ${inventory[itemName].quantity})`;
+        inventory[itemName].lastBy = actor;
+        alert(`Logged: ${qtyValue} taken from ${itemName}`);
+        logoutStaff();;
     }
 
-    logs.unshift(`[${new Date().toLocaleTimeString()}] ${actor} ${type.toUpperCase()}ED ${qty} ${item}`);
+    logs.unshift(`[${new Date().toLocaleTimeString()}] ${actor} ${type.toUpperCase()}ED ${qtyValue} of ${itemName}`);
     saveAndRefresh();
 }
 
